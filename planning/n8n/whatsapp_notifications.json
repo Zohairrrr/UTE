@@ -1,0 +1,407 @@
+{
+  "name": "Urban Tiffin - WhatsApp & Status Notifications",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "urban-tiffin-events",
+        "options": {}
+      },
+      "id": "1d8bf624-9df0-4b5c-b17b-d45e9a4f6eb8",
+      "name": "Next.js Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "={{ $json.body.event }}",
+                  "type": "string"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.body.event }}",
+                    "rightValue": "payment.submitted",
+                    "operator": "equal"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameKeys": {},
+              "outputIndex": 0
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "={{ $json.body.event }}",
+                  "type": "string"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.body.event }}",
+                    "rightValue": "payment.approved",
+                    "operator": "equal"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameKeys": {},
+              "outputIndex": 1
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "={{ $json.body.event }}",
+                  "type": "string"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.body.event }}",
+                    "rightValue": "payment.rejected",
+                    "operator": "equal"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameKeys": {},
+              "outputIndex": 2
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "={{ $json.body.event }}",
+                  "type": "string"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.body.event }}",
+                    "rightValue": "delivery.updated",
+                    "operator": "equal"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameKeys": {},
+              "outputIndex": 3
+            }
+          ]
+        }
+      },
+      "id": "e95cfc9d-d816-43b6-9df9-598d9e8460bb",
+      "name": "Route Event Type",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [
+        470,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.facebook.com/v18.0/YOUR_PHONE_NUMBER_ID/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "oAuth2",
+        "sendHeaders": true,
+        "headers": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_META_ACCESS_TOKEN"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "messaging_product",
+              "value": "whatsapp"
+            },
+            {
+              "name": "to",
+              "value": "={{ $json.body.data.customerPhone }}"
+            },
+            {
+              "name": "type",
+              "value": "template"
+            },
+            {
+              "name": "template",
+              "value": "={ \"name\": \"payment_received_tiffin\", \"language\": { \"code\": \"en_US\" } }"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "5fa23d1b-5e60-496a-85d1-12c8bbf9d0ef",
+      "name": "Send Receipt Upload Confirmation",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        750,
+        150
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.facebook.com/v18.0/YOUR_PHONE_NUMBER_ID/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "oAuth2",
+        "sendHeaders": true,
+        "headers": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_META_ACCESS_TOKEN"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "messaging_product",
+              "value": "whatsapp"
+            },
+            {
+              "name": "to",
+              "value": "={{ $json.body.data.customerPhone }}"
+            },
+            {
+              "name": "type",
+              "value": "template"
+            },
+            {
+              "name": "template",
+              "value": "={ \"name\": \"payment_approved_tiffin\", \"language\": { \"code\": \"en_US\" }, \"components\": [ { \"type\": \"body\", \"parameters\": [ { \"type\": \"text\", \"text\": \"{{ $json.body.data.customerName }}\" }, { \"type\": \"text\", \"text\": \"{{ $json.body.data.approvedDeliverySlot }}\" } ] } ] }"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "4e72390f-9025-4c07-88d4-53907cbf663b",
+      "name": "Send Approval WhatsApp",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        750,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.facebook.com/v18.0/YOUR_PHONE_NUMBER_ID/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "oAuth2",
+        "sendHeaders": true,
+        "headers": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_META_ACCESS_TOKEN"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "messaging_product",
+              "value": "whatsapp"
+            },
+            {
+              "name": "to",
+              "value": "={{ $json.body.data.customerPhone }}"
+            },
+            {
+              "name": "type",
+              "value": "template"
+            },
+            {
+              "name": "template",
+              "value": "={ \"name\": \"payment_rejected_tiffin\", \"language\": { \"code\": \"en_US\" }, \"components\": [ { \"type\": \"body\", \"parameters\": [ { \"type\": \"text\", \"text\": \"{{ $json.body.data.rejectionReason }}\" } ] } ] }"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "e4f88417-38ea-4f9e-bc45-e63d5ff649d2",
+      "name": "Send Rejection WhatsApp",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        750,
+        450
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.facebook.com/v18.0/YOUR_PHONE_NUMBER_ID/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "oAuth2",
+        "sendHeaders": true,
+        "headers": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_META_ACCESS_TOKEN"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "messaging_product",
+              "value": "whatsapp"
+            },
+            {
+              "name": "to",
+              "value": "={{ $json.body.data.customerPhone }}"
+            },
+            {
+              "name": "type",
+              "value": "template"
+            },
+            {
+              "name": "template",
+              "value": "={ \"name\": \"delivery_status_update\", \"language\": { \"code\": \"en_US\" }, \"components\": [ { \"type\": \"body\", \"parameters\": [ { \"type\": \"text\", \"text\": \"{{ $json.body.data.status }}\" }, { \"type\": \"text\", \"text\": \"{{ $json.body.data.weekday }} ({{ $json.body.data.deliverySlot }})\" } ] } ] }"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ef5ad4c2-9cf5-4cf5-b108-9df2c2f6d0f1",
+      "name": "Send Delivery Update WhatsApp",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        750,
+        600
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.facebook.com/v18.0/YOUR_PHONE_NUMBER_ID/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "oAuth2",
+        "sendHeaders": true,
+        "headers": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_META_ACCESS_TOKEN"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "messaging_product",
+              "value": "whatsapp"
+            },
+            {
+              "name": "to",
+              "value": "YOUR_ADMIN_WHATSAPP_NUMBER"
+            },
+            {
+              "name": "type",
+              "value": "text"
+            },
+            {
+              "name": "text",
+              "value": "={ \"body\": \"🔔 *New Payment proof uploaded!*\\n\\n👤 Customer: {{ $json.body.data.customerName }}\\n💰 Amount: PKR {{ $json.body.data.amount }}\\n🔗 View Screenshot: {{ $json.body.siteUrl }}/admin/payments\" }"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "cf6d62ea-630e-4361-9c60-c3d5ff649d21",
+      "name": "Notify Admin Team",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        970,
+        150
+      ]
+    }
+  ],
+  "connections": {
+    "Next.js Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Route Event Type",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route Event Type": {
+      "main": [
+        [
+          {
+            "node": "Send Receipt Upload Confirmation",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Approval WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Rejection WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Delivery Update WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Receipt Upload Confirmation": {
+      "main": [
+        [
+          {
+            "node": "Notify Admin Team",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {},
+  "versionId": "f7d739b6-8a5c-42cb-b162-81766a50616b",
+  "id": "urban_tiffin_whatsapp_notifications"
+}

@@ -1,0 +1,297 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  CUSTOMER
+  ADMIN
+}
+
+enum Tier {
+  STANDARD
+  PREMIUM
+  EXECUTIVE
+}
+
+enum SubscriptionStatus {
+  PENDING_PAYMENT
+  CONFIRMED
+  REJECTED
+  EXPIRED
+  CANCELLED
+}
+
+enum OrderType {
+  CUSTOM
+  EVENT
+  FROZEN_GOODS
+}
+
+enum OrderStatus {
+  PENDING_PAYMENT
+  CONFIRMED
+  REJECTED
+  FULFILLED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum DeliveryStatus {
+  PENDING
+  DELIVERED
+  SKIPPED
+  ISSUE
+}
+
+model User {
+  id                  String               @id @default(cuid())
+  name                String
+  email               String               @unique
+  phone               String
+  passwordHash        String
+  role                Role                 @default(CUSTOMER)
+  addressType         String?
+  addressLine         String?
+  area                String?
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  orders              Order[]
+  payments            Payment[]
+  subscriptions       Subscription[]
+  subscriptionDeliveries SubscriptionDelivery[]
+  passwordResetTokens PasswordResetToken[]
+
+  @@index([phone])
+  @@index([name])
+  @@map("users")
+}
+
+model Subscription {
+  id                    String                 @id @default(cuid())
+  userId                String
+  user                  User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tier                  Tier
+  status                SubscriptionStatus     @default(PENDING_PAYMENT)
+  startDate             DateTime?
+  endDate               DateTime?
+  total                 Int
+  requestedDeliverySlot String?
+  approvedDeliverySlot  String?
+  notes                 String?
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  payments              Payment[]
+  deliveries            SubscriptionDelivery[]
+
+  @@index([userId, status, endDate])
+  @@map("subscriptions")
+}
+
+model Order {
+  id            String      @id @default(cuid())
+  userId        String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type          OrderType
+  status        OrderStatus @default(PENDING_PAYMENT)
+  title         String
+  details       String
+  deliveryDate  DateTime?
+  deliverySlot  String?
+  addressLine   String
+  area          String
+  estimatedTotal Int
+  finalTotal    Int?
+  guestCount    Int?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  payments      Payment[]
+
+  @@map("orders")
+}
+
+model Payment {
+  id             String        @id @default(cuid())
+  userId         String
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscriptionId String?
+  subscription   Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  orderId         String?
+  order           Order?       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  amount          Int
+  screenshotUrl   String
+  storagePath     String
+  status          PaymentStatus @default(PENDING)
+  reviewedById    String?
+  reviewedAt      DateTime?
+  rejectionReason String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([status, createdAt])
+  @@index([userId, status, createdAt])
+  @@map("payments")
+}
+
+model SubscriptionPlan {
+  id             String         @id @default(cuid())
+  tier           Tier           @unique
+  name           String
+  label          String
+  secondaryLabel String
+  price          Int
+  cadence        String
+  active         Boolean        @default(true)
+  displayOrder   Int            @default(0)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  menuItems      MealMenuItem[]
+
+  @@map("subscription_plans")
+}
+
+model MealMenuItem {
+  id           String           @id @default(cuid())
+  planId       String
+  plan         SubscriptionPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  weekday      String
+  itemText     String
+  displayOrder Int              @default(0)
+  active       Boolean          @default(true)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  @@index([planId, weekday, displayOrder])
+  @@map("meal_menu_items")
+}
+
+model FrozenProduct {
+  id           String   @id @default(cuid())
+  name         String
+  pack         String
+  price        Int
+  stockNote    String?
+  active       Boolean  @default(true)
+  displayOrder Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("frozen_products")
+}
+
+model BusinessSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("business_settings")
+}
+
+model AdminAuditLog {
+  id        String   @id @default(cuid())
+  adminId   String
+  action    String
+  target    String
+  summary   String
+  createdAt DateTime @default(now())
+
+  @@index([adminId, createdAt])
+  @@map("admin_audit_logs")
+}
+
+model PendingRegistration {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  phone        String
+  passwordHash String
+  addressType  String
+  addressLine  String
+  area         String
+  otpHash      String
+  expiresAt    DateTime
+  attemptCount Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([email, expiresAt])
+  @@map("pending_registrations")
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId, expiresAt])
+  @@map("password_reset_tokens")
+}
+
+model RateLimitCounter {
+  id          String   @id @default(cuid())
+  scope       String
+  identifier  String
+  windowStart DateTime
+  count       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([scope, identifier, windowStart])
+  @@index([windowStart])
+  @@map("rate_limit_counters")
+}
+
+model SubscriptionDelivery {
+  id             String         @id @default(cuid())
+  subscriptionId String
+  subscription   Subscription   @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deliveryDate   DateTime
+  weekday        String
+  deliverySlot   String
+  menuItems      String[]       @default([])
+  status         DeliveryStatus @default(PENDING)
+  deliveredAt    DateTime?
+  issueNote      String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@unique([subscriptionId, deliveryDate])
+  @@index([deliveryDate, status])
+  @@index([userId, deliveryDate])
+  @@index([subscriptionId, deliveryDate])
+  @@map("subscription_deliveries")
+}
+
+model AppEventLog {
+  id         String   @id @default(cuid())
+  level      String
+  scope      String
+  action     String
+  userId     String?
+  identifier String?
+  summary    String
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  @@index([scope, createdAt])
+  @@index([userId, createdAt])
+  @@map("app_event_logs")
+}

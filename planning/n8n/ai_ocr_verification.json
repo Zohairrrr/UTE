@@ -1,0 +1,250 @@
+{
+  "name": "Urban Tiffin - AI Receipt OCR Verification",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "urban-tiffin-ocr",
+        "options": {}
+      },
+      "id": "e30fb902-698e-48f5-b28e-5b123a6e8eb8",
+      "name": "Next.js Webhook Trigger (payment.submitted)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        200,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://mcjfrbhtvimpkbszblue.supabase.co/storage/v1/object/public/payment-receipts/{{ $json.body.data.screenshotUrl }}",
+        "responseFormat": "file",
+        "options": {}
+      },
+      "id": "e45cfc9d-d816-43b6-9df9-598d9e8460aa",
+      "name": "Download Receipt Image",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        420,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o-mini",
+        "prompt": "Analyze this bank transfer receipt screenshot and extract the following fields in JSON format:\n{\n  \"amount\": integer (total amount paid in PKR),\n  \"transactionId\": string (unique reference or transaction ID),\n  \"status\": \"SUCCESS\" | \"FAILED\" | \"PENDING\",\n  \"date\": string (date of transaction)\n}\nReturn ONLY the JSON object, nothing else.",
+        "options": {}
+      },
+      "id": "4e72390f-9025-4c07-88d4-53907cbf66aa",
+      "name": "OpenAI Vision OCR",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1,
+      "position": [
+        640,
+        300
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "YOUR_OPENAI_CREDENTIALS_ID",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const ocrData = JSON.parse($input.first().json.message.content.trim());\nconst expectedAmount = parseInt($node[\"Next.js Webhook Trigger (payment.submitted)\"].json.body.data.amount);\n\nconst matches = ocrData.amount === expectedAmount && ocrData.status === 'SUCCESS';\n\nreturn {\n  matches,\n  ocrAmount: ocrData.amount,\n  expectedAmount,\n  transactionId: ocrData.transactionId,\n  ocrStatus: ocrData.status\n};"
+      },
+      "id": "ef5ad4c2-9cf5-4cf5-b108-9df2c2f6d0aa",
+      "name": "Verify Match logic",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        860,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "type": "boolean"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.matches }}",
+              "rightValue": true,
+              "operator": "true"
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "cf6d62ea-630e-4361-9c60-c3d5ff649d2a",
+      "name": "If Match",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        1080,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $node[\"Next.js Webhook Trigger (payment.submitted)\"].json.body.siteUrl }}/api/webhooks/n8n",
+        "sendHeaders": true,
+        "headers": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer uty-38a4d-n8n-sec-2026-tiffin"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "action",
+              "value": "approve"
+            },
+            {
+              "name": "paymentId",
+              "value": "={{ $node[\"Next.js Webhook Trigger (payment.submitted)\"].json.body.data.paymentId }}"
+            },
+            {
+              "name": "reason",
+              "value": "AI Verified Match (OCR)"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "5fa23d1b-5e60-496a-85d1-12c8bbf9d0aa",
+      "name": "Approve Payment via Next.js API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        1300,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.facebook.com/v18.0/YOUR_PHONE_NUMBER_ID/messages",
+        "sendHeaders": true,
+        "headers": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_META_ACCESS_TOKEN"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "messaging_product",
+              "value": "whatsapp"
+            },
+            {
+              "name": "to",
+              "value": "YOUR_ADMIN_WHATSAPP_NUMBER"
+            },
+            {
+              "name": "type",
+              "value": "text"
+            },
+            {
+              "name": "text",
+              "value": "={ \"body\": \"⚠️ *AI OCR Match Failed for Payment proof!*\\n\\n👤 Customer: {{ $node[\\\"Next.js Webhook Trigger (payment.submitted)\\\"].json.body.data.customerName }}\\n💰 Expected: PKR {{ $json.expectedAmount }}\\n🔍 AI Found: PKR {{ $json.ocrAmount }}\\n🚫 AI Status: {{ $json.ocrStatus }}\\n🔗 Review: {{ $node[\\\"Next.js Webhook Trigger (payment.submitted)\\\"].json.body.siteUrl }}/admin/payments\" }"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "cf6d62ea-630e-4361-9c60-c3d5ff649d2b",
+      "name": "Notify Admin of OCR Failure",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        1300,
+        420
+      ]
+    }
+  ],
+  "connections": {
+    "Next.js Webhook Trigger (payment.submitted)": {
+      "main": [
+        [
+          {
+            "node": "Download Receipt Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Receipt Image": {
+      "main": [
+        [
+          {
+            "node": "OpenAI Vision OCR",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Vision OCR": {
+      "main": [
+        [
+          {
+            "node": "Verify Match logic",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify Match logic": {
+      "main": [
+        [
+          {
+            "node": "If Match",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Match": {
+      "main": [
+        [
+          {
+            "node": "Approve Payment via Next.js API",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Notify Admin of OCR Failure",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {},
+  "versionId": "f7d739b6-8a5c-42cb-b162-81766a50616c",
+  "id": "urban_tiffin_ai_ocr_verification"
+}

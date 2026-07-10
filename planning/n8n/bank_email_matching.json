@@ -1,0 +1,241 @@
+{
+  "name": "Urban Tiffin - Bank Email Auto-Matching",
+  "nodes": [
+    {
+      "parameters": {
+        "postAction": "nothing",
+        "format": "resolved",
+        "onEmailReceived": "checkInbox",
+        "downloadAttachments": false,
+        "imapInterface": {
+          "host": "imap.gmail.com",
+          "ssl": true,
+          "port": 993
+        },
+        "searchCriteria": {
+          "subject": "transaction alert"
+        }
+      },
+      "id": "e30fb902-698e-48f5-b28e-5b123a6e8eb9",
+      "name": "Email Read (IMAP) Trigger",
+      "type": "n8n-nodes-base.emailReadImap",
+      "typeVersion": 1,
+      "position": [
+        200,
+        300
+      ],
+      "credentials": {
+        "imap": {
+          "id": "YOUR_IMAP_CREDENTIALS_ID",
+          "name": "IMAP account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const emailBody = $input.first().json.text || $input.first().json.html || \"\";\n\n// Example matching: \"You received PKR 10,800 from Zohair Yaseen, Ref: 98127398\"\nconst amountMatch = emailBody.match(/(?:PKR|Rs\\.?)\\s*([\\d,]+)/i);\nconst refMatch = emailBody.match(/(?:Ref|Reference|Txn|ID)[:\\s]*([a-zA-Z0-9]+)/i);\n\nconst amount = amountMatch ? parseInt(amountMatch[1].replace(/,/g, '')) : 0;\nconst referenceId = refMatch ? refMatch[1].trim() : \"\";\n\nreturn {\n  amount,\n  referenceId,\n  emailSnippet: emailBody.substring(0, 150)\n};"
+      },
+      "id": "e45cfc9d-d816-43b6-9df9-598d9e8460ab",
+      "name": "Parse Bank Email Details",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        420,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "table": "payments",
+        "returnAll": true,
+        "where": "={\n  \"status\": \"PENDING\",\n  \"amount\": {{ $json.amount }}\n}",
+        "options": {}
+      },
+      "id": "4e72390f-9025-4c07-88d4-53907cbf66ab",
+      "name": "Query Supabase for Pending Payment",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        640,
+        300
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "YOUR_SUPABASE_CREDENTIALS_ID",
+          "name": "Supabase connection"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "type": "number"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $input.first().json.length }}",
+              "rightValue": 0,
+              "operator": "greater"
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "ef5ad4c2-9cf5-4cf5-b108-9df2c2f6d0ab",
+      "name": "If Payment Match Found",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        860,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://YOUR_NEXTJS_SITE_URL/api/webhooks/n8n",
+        "sendHeaders": true,
+        "headers": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer uty-38a4d-n8n-sec-2026-tiffin"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "action",
+              "value": "approve"
+            },
+            {
+              "name": "paymentId",
+              "value": "={{ $node[\"Query Supabase for Pending Payment\"].json[0].id }}"
+            },
+            {
+              "name": "reason",
+              "value": "Auto-Matched Bank Transfer Email Alert"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "5fa23d1b-5e60-496a-85d1-12c8bbf9d0ab",
+      "name": "Auto-Approve via Next.js Callback API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        1080,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.facebook.com/v18.0/YOUR_PHONE_NUMBER_ID/messages",
+        "sendHeaders": true,
+        "headers": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_META_ACCESS_TOKEN"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "messaging_product",
+              "value": "whatsapp"
+            },
+            {
+              "name": "to",
+              "value": "YOUR_ADMIN_WHATSAPP_NUMBER"
+            },
+            {
+              "name": "type",
+              "value": "text"
+            },
+            {
+              "name": "text",
+              "value": "={ \"body\": \"⚠️ *Bank Transfer Alert Match Failed*\\n\\n💰 Amount: PKR {{ $node[\\\"Parse Bank Email Details\\\"].json.amount }}\\nRef: {{ $node[\\\"Parse Bank Email Details\\\"].json.referenceId }}\\n\\nNo pending payment matching this amount was found in the database. Please review manually.\" }"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "cf6d62ea-630e-4361-9c60-c3d5ff649d2c",
+      "name": "Notify Admin of Email Match Miss",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        1080,
+        420
+      ]
+    }
+  ],
+  "connections": {
+    "Email Read (IMAP) Trigger": {
+      "main": [
+        [
+          {
+            "node": "Parse Bank Email Details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Bank Email Details": {
+      "main": [
+        [
+          {
+            "node": "Query Supabase for Pending Payment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query Supabase for Pending Payment": {
+      "main": [
+        [
+          {
+            "node": "If Payment Match Found",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Payment Match Found": {
+      "main": [
+        [
+          {
+            "node": "Auto-Approve via Next.js Callback API",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Notify Admin of Email Match Miss",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "versionId": "f7d739b6-8a5c-42cb-b162-81766a50616d",
+  "id": "urban_tiffin_bank_email_matching"
+}
