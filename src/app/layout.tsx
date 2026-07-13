@@ -8,7 +8,9 @@ import "@fontsource/plus-jakarta-sans/500.css";
 import "@fontsource/plus-jakarta-sans/600.css";
 import "@fontsource/plus-jakarta-sans/700.css";
 import { BrandSplash } from "@/components/brand-splash";
+import { WhatsAppWidget } from "@/components/whatsapp-widget";
 import { absoluteUrl, defaultDescription, siteName, siteUrl } from "@/lib/seo";
+import { getPublicContent } from "@/lib/public-content";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -67,12 +69,16 @@ export const viewport: Viewport = {
   viewportFit: "cover"
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const content = await getPublicContent();
+  const { phone, whatsappUrl } = content.business;
+
   return (
     <html lang="en">
       <body>
         {children}
         <BrandSplash />
+        <WhatsAppWidget phone={phone} whatsappUrl={whatsappUrl} />
         <Toaster
           position="bottom-left"
           closeButton
