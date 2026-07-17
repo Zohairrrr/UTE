@@ -739,42 +739,61 @@ export function HomeClient({ business, plans, frozenGoods, signedIn, setupMode =
           <section className="border-y border-brand-green/10 bg-brand-cream-dark">
             <div ref={bentoRef} className="mx-auto grid max-w-7xl gap-px bg-brand-green/10 px-4 py-14 sm:px-6 md:grid-cols-2 lg:grid-cols-6 lg:px-8">
               {[
-                ["Meal Plans", "/subscriptions", "Standard, Premium, and Executive monthly plans.", "lg:col-span-2 lg:row-span-2 min-h-72", "/food/web/img_8679.jpeg"],
-                ["Custom Order", "/custom-order", "Bulk meals with date, address, and payment screenshot.", "lg:col-span-2 min-h-52", "/food/web/img_8680.jpeg"],
-                ["Events", "/events", "Catering and decor for family or office events.", "lg:col-span-2 min-h-52", "/food/web/img_8718.jpeg"],
-                ["Frozen Food", "/frozen-goods", "Ready-to-freeze packs for homes and offices.", "lg:col-span-2 min-h-52", "/food/web/img_8722.jpeg"],
-                ["About", "/about", "How our food and delivery service works.", "lg:col-span-2 min-h-52", "/food/web/img_8692.jpeg"]
-              ].map(([title, href, copy, className, imagePath]) => {
+                ["Meal Plans", "/subscriptions", "Standard, Premium, and Executive monthly plans.", "lg:col-span-2 lg:row-span-2 min-h-72", "/food/web/img_8679.jpeg", "image"],
+                ["Custom Order", "/custom-order", "Bulk meals with date, address, and payment screenshot.", "lg:col-span-2 min-h-52", "/food/web/img_8680.jpeg", "image"],
+                ["Events", "/events", "Catering and decor for family or office events.", "lg:col-span-2 min-h-52", "", "green"],
+                ["Frozen Food", "/frozen-goods", "Ready-to-freeze packs for homes and offices.", "lg:col-span-2 min-h-52", "", "ochre"],
+                ["About", "/about", "How our food and delivery service works.", "lg:col-span-2 min-h-52", "", "green"]
+              ].map(([title, href, copy, className, imagePath, theme]) => {
+                const isImage = theme === "image";
+                const isOchre = theme === "ochre";
+                
                 return (
                   <motion.div
                     key={href}
-                    className={`${className} relative overflow-hidden group border border-brand-green/10 bg-[#0c120d]`}
+                    className={`${className} relative overflow-hidden group border border-brand-green/10 ${
+                      isOchre 
+                        ? "bg-brand-ochre" 
+                        : "bg-brand-green"
+                    }`}
                     whileHover={{ y: -5 }}
                     whileTap={{ scale: 0.99 }}
                     transition={spring}
                   >
-                    <div className="absolute inset-0 w-full h-full pointer-events-none">
-                      <Image
-                        src={imagePath}
-                        alt={title}
-                        fill
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                        className="object-cover transition-transform duration-[700ms] ease-[cubic-bezier(0.23,1,0.32,1)] group-hover:scale-[1.06] opacity-60 group-hover:opacity-70"
-                      />
-                      {/* Deep black gradient overlay for WCAG AAA contrast ratio */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/98 via-black/70 to-black/20 transition-opacity duration-300 group-hover:via-black/75" />
-                    </div>
+                    {isImage && imagePath ? (
+                      <div className="absolute inset-0 w-full h-full pointer-events-none">
+                        <Image
+                          src={imagePath}
+                          alt={title}
+                          fill
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                          className="object-cover transition-transform duration-[700ms] ease-[cubic-bezier(0.23,1,0.32,1)] group-hover:scale-[1.06] opacity-60 group-hover:opacity-75"
+                        />
+                        {/* Standard Tailwind gradient for WCAG AAA contrast */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-transparent transition-opacity duration-300 group-hover:from-black group-hover:via-black/90" />
+                      </div>
+                    ) : null}
                     
                     <Link 
                       href={href} 
                       className="relative z-10 flex h-full flex-col justify-between p-5 min-h-[inherit]"
                     >
-                      <span className="text-xs font-bold uppercase tracking-[0.22em] text-brand-ochre">
+                      <span className={
+                        isOchre 
+                          ? "text-xs font-bold uppercase tracking-[0.22em] text-brand-green/60" 
+                          : "text-xs font-bold uppercase tracking-[0.22em] text-brand-ochre"
+                      }>
                         View option
                       </span>
                       <div>
-                        <h2 className="font-display text-4xl font-semibold tracking-[0.055em] text-brand-cream">{title}</h2>
-                        <p className="mt-4 text-sm leading-6 text-brand-cream/80">{copy}</p>
+                        <h2 className={`font-display text-4xl font-semibold tracking-[0.055em] ${
+                          isOchre ? "text-brand-green" : "text-brand-cream"
+                        }`}>{title}</h2>
+                        <p className={
+                          isOchre 
+                            ? "mt-4 text-sm leading-6 text-brand-green/75" 
+                            : "mt-4 text-sm leading-6 text-brand-cream/70"
+                        }>{copy}</p>
                       </div>
                     </Link>
                   </motion.div>
