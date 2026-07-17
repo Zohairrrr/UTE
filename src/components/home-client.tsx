@@ -6,6 +6,9 @@ import { useActionState, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { CalendarClock, CheckCircle2, ChefHat, FileImage, Landmark, Package, Phone, Upload, X } from "lucide-react";
 import { toast } from "sonner";
+import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { createOrderPayment, createSubscriptionPayment } from "@/actions/checkout";
 import { FlagDivider } from "@/components/motifs";
 import { SubmitButton } from "@/components/submit-button";
@@ -13,6 +16,10 @@ import { PlanCard } from "@/components/plan-card";
 import type { FrozenGood, Plan } from "@/lib/catalog";
 import { money } from "@/lib/format";
 import { SUPPORTED_AREAS } from "@/lib/geo";
+
+if (typeof window !== "undefined") {
+  gsap.registerPlugin(ScrollTrigger);
+}
 
 type Business = {
   missing: string[];
@@ -642,6 +649,34 @@ export function HomeClient({ business, plans, frozenGoods, signedIn, setupMode =
   const activePlan = activeTier ?? plans[0];
   const isHome = view === "home";
 
+  const bentoRef = useRef<HTMLDivElement>(null);
+
+  useGSAP(() => {
+    if (!bentoRef.current || !isHome) return;
+    
+    gsap.fromTo(
+      bentoRef.current.children,
+      {
+        opacity: 0,
+        y: 40,
+        scale: 0.98
+      },
+      {
+        opacity: 1,
+        y: 0,
+        scale: 1,
+        duration: 0.7,
+        stagger: 0.08,
+        ease: "power3.out",
+        scrollTrigger: {
+          trigger: bentoRef.current,
+          start: "top 88%",
+          toggleActions: "play none none none"
+        }
+      }
+    );
+  }, { dependencies: [isHome], scope: bentoRef });
+
   return (
     <main>
       {isHome ? (
@@ -702,64 +737,44 @@ export function HomeClient({ business, plans, frozenGoods, signedIn, setupMode =
           </section>
 
           <section className="border-y border-brand-green/10 bg-brand-cream-dark">
-            <div className="mx-auto grid max-w-7xl gap-px bg-brand-green/10 px-4 py-14 sm:px-6 md:grid-cols-2 lg:grid-cols-6 lg:px-8">
+            <div ref={bentoRef} className="mx-auto grid max-w-7xl gap-px bg-brand-green/10 px-4 py-14 sm:px-6 md:grid-cols-2 lg:grid-cols-6 lg:px-8">
               {[
-                ["Meal Plans", "/subscriptions", "Standard, Premium, and Executive monthly plans.", "lg:col-span-2 lg:row-span-2 min-h-72", "/food/web/img_8679.jpeg", "dark"],
-                ["Custom Order", "/custom-order", "Bulk meals with date, address, and payment screenshot.", "lg:col-span-2 min-h-52", "/food/web/img_8680.jpeg", "dark"],
-                ["Events", "/events", "Catering and decor for family or office events.", "lg:col-span-2 min-h-52", "/food/web/img_8675.jpeg", "dark"],
-                ["Frozen Food", "/frozen-goods", "Ready-to-freeze packs for homes and offices.", "lg:col-span-2 min-h-52", "", "ochre"],
-                ["About", "/about", "How our food and delivery service works.", "lg:col-span-2 min-h-52", "", "green"]
-              ].map(([title, href, copy, className, imagePath, theme]) => {
-                const isOchre = theme === "ochre";
-                const isGreen = theme === "green";
-                
+                ["Meal Plans", "/subscriptions", "Standard, Premium, and Executive monthly plans.", "lg:col-span-2 lg:row-span-2 min-h-72", "/food/web/img_8679.jpeg"],
+                ["Custom Order", "/custom-order", "Bulk meals with date, address, and payment screenshot.", "lg:col-span-2 min-h-52", "/food/web/img_8680.jpeg"],
+                ["Events", "/events", "Catering and decor for family or office events.", "lg:col-span-2 min-h-52", "/food/web/img_8718.jpeg"],
+                ["Frozen Food", "/frozen-goods", "Ready-to-freeze packs for homes and offices.", "lg:col-span-2 min-h-52", "/food/web/img_8722.jpeg"],
+                ["About", "/about", "How our food and delivery service works.", "lg:col-span-2 min-h-52", "/food/web/img_8692.jpeg"]
+              ].map(([title, href, copy, className, imagePath]) => {
                 return (
                   <motion.div
                     key={href}
-                    className={`${className} relative overflow-hidden group border border-brand-green/10 ${
-                      isOchre 
-                        ? "bg-brand-ochre" 
-                        : "bg-brand-green"
-                    }`}
+                    className={`${className} relative overflow-hidden group border border-brand-green/10 bg-[#0c120d]`}
                     whileHover={{ y: -5 }}
                     whileTap={{ scale: 0.99 }}
                     transition={spring}
                   >
-                    {imagePath ? (
-                      <div className="absolute inset-0 w-full h-full pointer-events-none">
-                        <Image
-                          src={imagePath}
-                          alt={title}
-                          fill
-                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                          className="object-cover transition-transform duration-[700ms] ease-[cubic-bezier(0.23,1,0.32,1)] group-hover:scale-[1.06] opacity-35 group-hover:opacity-45"
-                        />
-                        <div className="absolute inset-0 bg-brand-green/94 transition-opacity duration-300 group-hover:bg-brand-green/90" />
-                      </div>
-                    ) : null}
+                    <div className="absolute inset-0 w-full h-full pointer-events-none">
+                      <Image
+                        src={imagePath}
+                        alt={title}
+                        fill
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        className="object-cover transition-transform duration-[700ms] ease-[cubic-bezier(0.23,1,0.32,1)] group-hover:scale-[1.06] opacity-60 group-hover:opacity-70"
+                      />
+                      {/* Deep black gradient overlay for WCAG AAA contrast ratio */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/98 via-black/70 to-black/20 transition-opacity duration-300 group-hover:via-black/75" />
+                    </div>
                     
                     <Link 
                       href={href} 
                       className="relative z-10 flex h-full flex-col justify-between p-5 min-h-[inherit]"
                     >
-                      <span className={
-                        isOchre 
-                          ? "text-xs font-bold uppercase tracking-[0.22em] text-brand-green/60" 
-                          : "text-xs font-bold uppercase tracking-[0.22em] text-brand-ochre"
-                      }>
+                      <span className="text-xs font-bold uppercase tracking-[0.22em] text-brand-ochre">
                         View option
                       </span>
                       <div>
-                        <h2 className={`font-display text-4xl font-semibold tracking-[0.055em] ${
-                          isOchre ? "text-brand-green" : "text-brand-cream"
-                        }`}>{title}</h2>
-                        <p className={
-                          isOchre 
-                            ? "mt-4 text-sm leading-6 text-brand-green/75" 
-                            : isGreen 
-                              ? "mt-4 text-sm leading-6 text-brand-cream/65" 
-                              : "mt-4 text-sm leading-6 text-brand-cream/70"
-                        }>{copy}</p>
+                        <h2 className="font-display text-4xl font-semibold tracking-[0.055em] text-brand-cream">{title}</h2>
+                        <p className="mt-4 text-sm leading-6 text-brand-cream/80">{copy}</p>
                       </div>
                     </Link>
                   </motion.div>
