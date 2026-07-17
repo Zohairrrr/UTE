@@ -671,14 +671,15 @@ export function HomeClient({ business, plans, frozenGoods, signedIn, setupMode =
             </Reveal>
             <Reveal delay={0.08} className="relative min-w-0">
               <div className="grid grid-cols-[1fr_74px] gap-3 sm:grid-cols-[1fr_88px]">
-                <div className="border border-brand-green/15 bg-brand-cream-dark p-3">
-                  <Image
-                    src="/brand/editorial-tiffin.png"
-                    alt="Premium tiffin meal service arranged for office lunch"
-                    width={1024}
-                    height={1024}
-                    className="aspect-[5/5.4] w-full object-cover lg:aspect-[5/5.7]"
-                    priority
+                <div className="relative border border-brand-green/15 bg-brand-cream-dark p-3 aspect-[5/5.4] w-full lg:aspect-[5/5.7] overflow-hidden">
+                  <video
+                    src="/food/video/01_720p.mp4"
+                    poster="/food/web/img_8675.jpeg"
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    className="h-full w-full object-cover"
                   />
                 </div>
                 <div className="grid content-between border border-brand-green/15 bg-brand-cream-dark p-2">
@@ -703,24 +704,51 @@ export function HomeClient({ business, plans, frozenGoods, signedIn, setupMode =
           <section className="border-y border-brand-green/10 bg-brand-cream-dark">
             <div className="mx-auto grid max-w-7xl gap-px bg-brand-green/10 px-4 py-14 sm:px-6 md:grid-cols-2 lg:grid-cols-6 lg:px-8">
               {[
-                ["Meal Plans", "/subscriptions", "Standard, Premium, and Executive monthly plans.", "lg:col-span-2 lg:row-span-2 min-h-72"],
-                ["Custom Order", "/custom-order", "Bulk meals with date, address, and payment screenshot.", "lg:col-span-2 min-h-52"],
-                ["Events", "/events", "Catering and decor for family or office events.", "bg-brand-green text-brand-cream lg:col-span-2 min-h-52"],
-                ["Frozen Food", "/frozen-goods", "Ready-to-freeze packs for homes and offices.", "lg:col-span-2 min-h-52"],
-                ["About", "/about", "How our food and delivery service works.", "lg:col-span-2 min-h-52"]
-              ].map(([title, href, copy, className]) => (
-                <motion.div key={href} className={title === "Events" ? className : `${className} bg-brand-cream`} whileHover={{ y: -5 }} transition={spring}>
-                  <Link href={href} className={title === "Events" ? "flex h-full flex-col justify-between p-5 transition hover:bg-brand-green/95" : "flex h-full flex-col justify-between p-5 transition hover:bg-brand-cream-dark"}>
-                    <span className={title === "Events" ? "text-xs font-bold uppercase tracking-[0.22em] text-brand-cream/60" : "text-xs font-bold uppercase tracking-[0.22em] text-brand-ochre"}>
-                      View option
-                    </span>
-                    <div>
-                      <h2 className="font-display text-4xl font-semibold tracking-[0.055em]">{title}</h2>
-                      <p className={title === "Events" ? "mt-4 text-sm leading-6 text-brand-cream/68" : "mt-4 text-sm leading-6 text-brand-green/68"}>{copy}</p>
+                ["Meal Plans", "/subscriptions", "Standard, Premium, and Executive monthly plans.", "lg:col-span-2 lg:row-span-2 min-h-72", "/food/web/img_8679.jpeg"],
+                ["Custom Order", "/custom-order", "Bulk meals with date, address, and payment screenshot.", "lg:col-span-2 min-h-52", "/food/web/img_8680.jpeg"],
+                ["Events", "/events", "Catering and decor for family or office events.", "lg:col-span-2 min-h-52", "/food/web/img_8700.jpeg"],
+                ["Frozen Food", "/frozen-goods", "Ready-to-freeze packs for homes and offices.", "lg:col-span-2 min-h-52", "/food/web/img_8687.jpeg"],
+                ["About", "/about", "How our food and delivery service works.", "lg:col-span-2 min-h-52", "/food/web/img_8692.jpeg"]
+              ].map(([title, href, copy, className, imagePath]) => {
+                const isEvents = title === "Events";
+                return (
+                  <motion.div
+                    key={href}
+                    className={`${className} relative overflow-hidden group border border-brand-green/10`}
+                    whileHover={{ y: -5 }}
+                    whileTap={{ scale: 0.99 }}
+                    transition={spring}
+                  >
+                    <div className="absolute inset-0 w-full h-full pointer-events-none">
+                      <Image
+                        src={imagePath}
+                        alt={title}
+                        fill
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        className="object-cover transition-transform duration-[700ms] ease-[cubic-bezier(0.23,1,0.32,1)] group-hover:scale-[1.06]"
+                      />
+                      <div className={`absolute inset-0 transition-opacity duration-300 ${
+                        isEvents 
+                          ? "bg-brand-green/88 group-hover:bg-brand-green/82" 
+                          : "bg-brand-cream/88 group-hover:bg-brand-cream/82"
+                      }`} />
                     </div>
-                  </Link>
-                </motion.div>
-              ))}
+                    
+                    <Link 
+                      href={href} 
+                      className="relative z-10 flex h-full flex-col justify-between p-5 min-h-[inherit]"
+                    >
+                      <span className={isEvents ? "text-xs font-bold uppercase tracking-[0.22em] text-brand-cream/60" : "text-xs font-bold uppercase tracking-[0.22em] text-brand-ochre"}>
+                        View option
+                      </span>
+                      <div>
+                        <h2 className={`font-display text-4xl font-semibold tracking-[0.055em] ${isEvents ? "text-brand-cream" : "text-brand-green"}`}>{title}</h2>
+                        <p className={isEvents ? "mt-4 text-sm leading-6 text-brand-cream/68" : "mt-4 text-sm leading-6 text-brand-green/68"}>{copy}</p>
+                      </div>
+                    </Link>
+                  </motion.div>
+                );
+              })}
             </div>
           </section>
 
@@ -825,11 +853,20 @@ export function HomeClient({ business, plans, frozenGoods, signedIn, setupMode =
         <section className="border-y border-brand-green/10 bg-brand-cream-dark">
         <div className="mx-auto grid max-w-7xl gap-10 px-4 py-16 sm:px-6 lg:grid-cols-3 lg:px-8">
           {[
-            ["Office Meal Plans", "Monthly meals with a clear weekly menu and payment approval."],
-            ["Hostel Delivery", "Daily food planning for students and residents who need reliable timing."],
-            ["Events And Decor", "Catering and decor for family gatherings, office events, and hosted dinners."]
-          ].map(([title, copy]) => (
+            ["Office Meal Plans", "Monthly meals with a clear weekly menu and payment approval.", "/food/web/img_8698.jpeg"],
+            ["Hostel Delivery", "Daily food planning for students and residents who need reliable timing.", "/food/web/img_8710.jpeg"],
+            ["Events And Decor", "Catering and decor for family gatherings, office events, and hosted dinners.", "/food/web/img_8700.jpeg"]
+          ].map(([title, copy, imagePath]) => (
             <Reveal key={title} className="border-brand-green/10 pr-0 lg:border-r lg:pr-8 lg:last:border-r-0">
+              <div className="relative mb-6 aspect-[16/10] overflow-hidden border border-brand-green/10">
+                <Image
+                  src={imagePath}
+                  alt={title}
+                  fill
+                  sizes="(max-width: 768px) 100vw, 33vw"
+                  className="object-cover transition-transform duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] hover:scale-105"
+                />
+              </div>
               <h2 className="font-display text-3xl tracking-[0.08em]">{title}</h2>
               <p className="mt-4 leading-7 text-brand-green/70">{copy}</p>
             </Reveal>
@@ -877,6 +914,15 @@ export function HomeClient({ business, plans, frozenGoods, signedIn, setupMode =
       <section className="border-y border-brand-green/10 bg-brand-cream-dark">
         <div className="mx-auto grid max-w-7xl gap-10 px-4 py-20 sm:px-6 lg:grid-cols-[0.8fr_1.2fr] lg:px-8">
           <Reveal>
+            <div className="relative mb-8 aspect-[16/10] overflow-hidden border border-brand-green/10">
+              <Image
+                src="/food/web/img_8680.jpeg"
+                alt="Custom Food Order"
+                fill
+                sizes="(max-width: 1024px) 100vw, 50vw"
+                className="object-cover transition-transform duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] hover:scale-105"
+              />
+            </div>
             <ChefHat className="mb-8 h-9 w-9 text-brand-ochre" />
             <h1 className="font-display text-4xl font-semibold tracking-[0.05em] sm:text-6xl">Custom Food Order</h1>
             <p className="mt-6 leading-8 text-brand-green/70">
@@ -904,6 +950,15 @@ export function HomeClient({ business, plans, frozenGoods, signedIn, setupMode =
         </Reveal>
         <Reveal delay={0.06} className="grid min-w-0 content-between border border-brand-green/15 bg-brand-cream-dark p-8">
           <div>
+            <div className="relative mb-6 aspect-[16/9] overflow-hidden border border-brand-green/10">
+              <Image
+                src="/food/web/img_8687.jpeg"
+                alt="Frozen Food Service"
+                fill
+                sizes="(max-width: 1024px) 100vw, 50vw"
+                className="object-cover transition-transform duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] hover:scale-105"
+              />
+            </div>
             <h3 className="font-display text-4xl tracking-[0.08em]">Frozen food service</h3>
             <p className="mt-5 leading-8 text-brand-green/70">
               Rolls, kebabs, and samosas prepared for home freezers, hostel kitchens, and office tea tables. Every order is confirmed after payment review.
@@ -925,6 +980,15 @@ export function HomeClient({ business, plans, frozenGoods, signedIn, setupMode =
       <section className="bg-brand-green text-brand-cream">
         <div className="mx-auto grid max-w-7xl gap-12 px-4 py-20 sm:px-6 lg:grid-cols-[0.95fr_1.05fr] lg:px-8">
           <Reveal>
+            <div className="relative mb-8 aspect-[16/10] overflow-hidden border border-brand-cream/20">
+              <Image
+                src="/food/web/img_8700.jpeg"
+                alt="Event Catering and Decor Spread"
+                fill
+                sizes="(max-width: 1024px) 100vw, 50vw"
+                className="object-cover transition-transform duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] hover:scale-105"
+              />
+            </div>
             <CalendarClock className="mb-8 h-10 w-10 text-brand-ochre" />
             <h2 className="text-balance font-display text-4xl tracking-[0.06em] sm:text-6xl">
               Event Catering And Decor
