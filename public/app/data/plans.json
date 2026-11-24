@@ -1,0 +1,11 @@
+{
+  "plans": [
+    { "tier": "STANDARD", "name": "Standard", "label": "Budget friendly", "price": 7800, "menu": "Karahi rotation, sabzi, daal chawal, roti, raita" },
+    { "tier": "PREMIUM", "name": "Premium", "label": "Customer favourite", "price": 10800, "menu": "Boneless entrees, dessert twice a week, priority menu swaps" },
+    { "tier": "EXECUTIVE", "name": "Executive", "label": "Best for offices", "price": 14800, "menu": "Chef-selected mains, dessert and drink, office packaging" }
+  ],
+  "bank": { "name": "Meezan Bank", "title": "Urban Tiffin & Events", "account": "0110 0104 5678 90", "note": "Sample account for the Phase 4 prototype" },
+  "phone": "0308 222 5656",
+  "whatsapp": "923082225656",
+  "reviewMinutes": 15
+}

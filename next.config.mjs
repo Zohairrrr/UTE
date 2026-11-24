@@ -29,8 +29,8 @@ const nextConfig = {
     const csp = [
       "default-src 'self'",
       `script-src ${scriptSrc}`,
-      "style-src 'self' 'unsafe-inline'",
-      "font-src 'self' data:",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+      "font-src 'self' data: https://fonts.gstatic.com",
       `img-src 'self' data: blob: https://images.unsplash.com https://${supabaseHost}`,
       `connect-src ${connectSrc}`,
       "frame-ancestors 'none'",
@@ -54,6 +54,10 @@ const nextConfig = {
         ]
       }
     ];
+  },
+  async rewrites() {
+    // Phase 4 mobile app (static files in public/app) is served at /app
+    return [{ source: "/app", destination: "/app/index.html" }];
   },
   experimental: {
     devtoolSegmentExplorer: false

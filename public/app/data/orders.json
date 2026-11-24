@@ -1,0 +1,35 @@
+{
+  "user": { "name": "Rukhsana Begum", "initials": "RB", "phone": "03012345678", "area": "Gulberg, Lahore", "email": "rukhsana.b@example.com" },
+  "orders": [
+    {
+      "id": "UT-1040", "type": "EVENT", "title": "Mehndi decor", "photo": null,
+      "status": "NEEDS_ATTENTION", "amount": 40000, "eventDate": "2026-12-12", "holdUntil": "2026-12-04",
+      "details": "Mehndi stage decor, 60 guests",
+      "reason": "The screenshot is blurry, so we could not read the amount.",
+      "history": [
+        { "status": "SUBMITTED", "at": "2026-11-18T15:55:00+05:00" },
+        { "status": "UNDER_REVIEW", "at": "2026-11-18T15:58:00+05:00" },
+        { "status": "NEEDS_ATTENTION", "at": "2026-11-18T16:12:00+05:00" }
+      ]
+    },
+    {
+      "id": "UT-1042", "type": "PLAN", "title": "Premium Meal Plan", "photo": "/food/thumb/img_8718.jpeg",
+      "status": "UNDER_REVIEW", "amount": 10800, "startDate": "2026-12-07", "slot": "12:30 – 1:00 pm",
+      "details": "Monthly lunch, Monday to Friday",
+      "history": [
+        { "status": "SUBMITTED", "minutesAgo": 26 },
+        { "status": "UNDER_REVIEW", "minutesAgo": 25 }
+      ]
+    },
+    {
+      "id": "UT-1038", "type": "EVENT", "title": "Dholki catering", "photo": "/food/thumb/img_8679.jpeg",
+      "status": "CONFIRMED", "amount": 85000, "received": 85000, "eventDate": "2026-12-05", "serving": "7:00 – 8:00 pm", "guests": 80,
+      "details": "Dholki catering, 80 guests",
+      "history": [
+        { "status": "SUBMITTED", "at": "2026-11-12T10:02:00+05:00" },
+        { "status": "UNDER_REVIEW", "at": "2026-11-12T10:05:00+05:00" },
+        { "status": "CONFIRMED", "at": "2026-11-12T10:21:00+05:00" }
+      ]
+    }
+  ]
+}
